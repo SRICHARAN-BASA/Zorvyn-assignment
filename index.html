@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinFlow | Responsive Financial Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #06b6d4;
+            --success: #10b981;
+            --danger: #f43f5e;
+            --bg: #0b0f1a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: #e2e8f0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+
+        /* Animated Mesh Background */
+        .bg-animate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 15% 15%, #083344 0%, transparent 45%),
+                        radial-gradient(circle at 85% 85%, #1e1b4b 0%, transparent 45%);
+            animation: moveBg 12s ease-in-out infinite alternate;
+        }
+        @keyframes moveBg { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+
+        /* Mobile-Ready Header */
+        header { 
+            display: flex; flex-direction: column; gap: 1.5rem; 
+            margin-bottom: 2rem; padding-top: 1rem;
+        }
+        @media (min-width: 768px) {
+            header { flex-direction: row; justify-content: space-between; align-items: center; }
+            .container { padding: 2rem; }
+        }
+
+        .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -1.5px; text-align: center; }
+        .logo span { color: var(--primary); text-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+
+        /* Responsive Search Bar */
+        .search-wrapper { position: relative; width: 100%; max-width: 450px; margin: 0 auto; }
+        .search-bar { 
+            width: 100%; padding: 0.9rem 1.5rem; background: var(--glass); 
+            border: 1px solid var(--border); border-radius: 14px; color: white;
+            backdrop-filter: blur(15px); transition: all 0.3s; font-size: 16px; /* Prevents auto-zoom on iOS */
+        }
+        .search-bar:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 25px rgba(6, 182, 212, 0.25); }
+
+        #searchPopup {
+            position: absolute; top: 115%; left: 0; width: 100%; background: rgba(22, 27, 34, 0.98);
+            border: 1px solid var(--primary); border-radius: 12px; padding: 1.2rem;
+            z-index: 100; display: none; backdrop-filter: blur(25px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .btn { padding: 0.8rem 1.4rem; border-radius: 12px; cursor: pointer; font-weight: 700; border: none; transition: 0.3s; font-size: 0.9rem; }
+        .btn-role { background: var(--primary); color: white; width: 100%; }
+        @media (min-width: 768px) { .btn-role { width: auto; } }
+
+        .btn-add { background: var(--success); color: white; }
+
+        /* Responsive Stats Grid */
+        .grid { 
+            display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; 
+        }
+        @media (min-width: 640px) { grid-template-columns: repeat(2, 1fr); }
+        @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; } }
+
+        .stat-card { 
+            background: var(--glass); border: 1px solid var(--border); padding: 1.5rem; 
+            border-radius: 24px; backdrop-filter: blur(20px); 
+        }
+        .value { font-size: 2rem; font-weight: 800; margin: 0.5rem 0; letter-spacing: -1px; }
+
+        /* Responsive Chart Layout */
+        .charts-row { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        @media (min-width: 1024px) { .charts-row { grid-template-columns: 1.8fr 1fr; gap: 1.5rem; } }
+
+        .chart-container { min-height: 300px; height: 350px; width: 100%; position: relative; }
+
+        /* Mobile Optimized Table */
+        .table-card { background: var(--glass); border-radius: 24px; border: 1px solid var(--border); overflow: hidden; margin-top: 1rem; }
+        .table-header { padding: 1.2rem; display: flex; flex-direction: row; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { padding: 1rem; text-align: left; color: #64748b; font-size: 0.7rem; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.85rem; }
+
+        .badge { padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .badge-income { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-expense { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
+
+        .admin-only { display: none; }
+        body.is-admin .admin-only { display: inline-block; }
+
+        /* Modal styling */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal { background: #0f172a; padding: 2rem; border-radius: 24px; width: 100%; max-width: 400px; border: 1px solid var(--border); }
+        .form-input { width: 100%; padding: 0.9rem; margin-bottom: 1rem; border-radius: 10px; background: #020617; color: white; border: 1px solid var(--border); font-size: 1rem; }
+
+        footer { text-align: center; padding: 3rem 1rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+        .quote { font-style: italic; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.95rem; line-height: 1.4; }
+        .brand-sig { font-weight: 800; font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
+    </style>
+</head>
+<body class="is-admin">
+    <div class="bg-animate"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">Fin<span>Flow</span></div>
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search & Analyze categories...">
+                <div id="searchPopup">
+                    <p id="popupText"></p>
+                </div>
+            </div>
+            <button class="btn btn-role" id="roleToggle">Role: Admin</button>
+        </header>
+
+        <div class="grid">
+            <div class="stat-card">
+                <div style="color:#94a3b8; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">TOTAL WEALTH</div>
+                <div class="value" id="netBalance">₹0</div>
+            </div>
+            <div class="stat-card">
+                <div style="color:#94a3b8; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">TOTAL INFLOW</div>
+                <div class="value" id="totalInc" style="color: var(--success)">₹0</div>
+            </div>
+            <div class="stat-card">
+                <div style="color:#94a3b8; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">TOTAL OUTFLOW</div>
+                <div class="value" id="totalExp" style="color: var(--danger)">₹0</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="stat-card">
+                <div style="margin-bottom: 1.2rem; font-weight: 700; font-size: 0.8rem; color: #94a3b8;">WEALTH TRAJECTORY</div>
+                <div class="chart-container"><canvas id="lineChart"></canvas></div>
+            </div>
+            <div class="stat-card">
+                <div style="margin-bottom: 1.2rem; font-weight: 700; font-size: 0.8rem; color: #94a3b8;">EXPENSE BREAKDOWN</div>
+                <div class="chart-container"><canvas id="pieChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <h3 style="font-weight: 800; font-size: 1rem;">Master Ledger</h3>
+                <button class="btn btn-add admin-only" onclick="openModal()" style="padding: 0.6rem 1rem; font-size: 0.8rem;">+ Add</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>CATEGORY</th>
+                            <th>TYPE</th>
+                            <th>AMOUNT</th>
+                            <th class="admin-only">ACT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <div style="max-width: 600px; margin: 0 auto;">
+                <p class="quote">"Beware of little expenses; a small leak will sink a great ship."</p>
+                <p class="brand-sig">— by FinFlow</p>
+                <p class="quote" style="margin-top: 2rem; opacity: 0.6;">"The goal is not more money. The goal is living life on your own terms."</p>
+                <p class="brand-sig" style="opacity: 0.6;">— by FinFlow</p>
+            </div>
+            <p style="font-size: 0.7rem; color: #475569; margin-top: 3rem; letter-spacing: 1px;">FINFLOW SYSTEM © 2026</p>
+        </footer>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2 style="margin-bottom: 1.5rem; letter-spacing: -1px; text-align: center;">New Entry</h2>
+            <input type="text" id="fCat" class="form-input" placeholder="Category (e.g. Rent, Salary)">
+            <input type="number" id="fAmt" class="form-input" placeholder="Amount (₹)">
+            <select id="fType" class="form-input">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <button class="btn btn-add" style="width: 100%; padding: 1rem;" onclick="saveEntry()">Commit Entry</button>
+            <button onclick="closeModal()" style="width: 100%; background: transparent; color: #64748b; border: none; margin-top: 15px; cursor: pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem('finflow_vResponsive')) || [
+            { id: 1, date: '2026-03-01', category: 'Salary', type: 'income', amount: 150000 },
+            { id: 2, date: '2026-03-05', category: 'House Rent', type: 'expense', amount: 30000 },
+            { id: 3, date: '2026-03-10', category: 'Grocery', type: 'expense', amount: 8500 },
+            { id: 4, date: '2026-03-15', category: 'Subscription', type: 'expense', amount: 1200 }
+        ];
+
+        let role = 'Admin', lineChart, pieChart;
+
+        window.onload = () => {
+            setupCharts();
+            updateDashboard();
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            document.getElementById('roleToggle').addEventListener('click', () => {
+                role = role === 'Admin' ? 'Viewer' : 'Admin';
+                document.getElementById('roleToggle').innerText = `Role: ${role}`;
+                document.body.classList.toggle('is-admin', role === 'Admin');
+                updateDashboard();
+            });
+        };
+
+        function handleSearch(e) {
+            const val = e.target.value.toLowerCase();
+            const popup = document.getElementById('searchPopup');
+            const pText = document.getElementById('popupText');
+
+            if(val.length > 1) {
+                const matches = transactions.filter(t => t.category.toLowerCase().includes(val));
+                const total = matches.reduce((s, c) => s + c.amount, 0);
+                popup.style.display = 'block';
+                pText.innerHTML = `Found <b>${matches.length}</b> matches<br>Aggregate: <b>₹${total.toLocaleString('en-IN')}</b>`;
+            } else {
+                popup.style.display = 'none';
+            }
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = transactions.filter(t => t.category.toLowerCase().includes(query));
+
+            const inc = transactions.filter(t => t.type === 'income').reduce((s, c) => s + c.amount, 0);
+            const exp = transactions.filter(t => t.type === 'expense').reduce((s, c) => s + c.amount, 0);
+            
+            document.getElementById('netBalance').innerText = `₹${(inc - exp).toLocaleString('en-IN')}`;
+            document.getElementById('totalInc').innerText = `₹${inc.toLocaleString('en-IN')}`;
+            document.getElementById('totalExp').innerText = `₹${exp.toLocaleString('en-IN')}`;
+
+            document.getElementById('tableBody').innerHTML = filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => `
+                <tr>
+                    <td style="color:#64748b; font-size:0.75rem;">${t.date.split('-').reverse().join('/')}</td>
+                    <td style="font-weight:700;">${t.category}</td>
+                    <td><span class="badge badge-${t.type}">${t.type}</span></td>
+                    <td style="font-weight:800;">₹${t.amount.toLocaleString('en-IN')}</td>
+                    <td class="admin-only"><button onclick="deleteEntry(${t.id})" style="color:var(--danger); background:none; border:none; cursor:pointer; font-weight:800;">×</button></td>
+                </tr>
+            `).join('');
+
+            updateChartData();
+            localStorage.setItem('finflow_vResponsive', JSON.stringify(transactions));
+        }
+
+        function setupCharts() {
+            const commonOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } };
+
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Balance', data: [], borderColor: '#06b6d4', tension: 0.4, fill: true, backgroundColor: 'rgba(6, 182, 212, 0.05)', pointRadius: 4 }]},
+                options: { ...commonOptions, plugins: { legend: { display: false } } }
+            });
+
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#06b6d4', '#f43f5e', '#fbbf24', '#10b981', '#8b5cf6'], borderWidth: 0 }]},
+                options: { ...commonOptions, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function updateChartData() {
+            const sorted = [...transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
+            let current = 0;
+            lineChart.data.labels = sorted.map(t => t.date.slice(5));
+            lineChart.data.datasets[0].data = sorted.map(t => { current += (t.type === 'income' ? t.amount : -t.amount); return current; });
+            lineChart.update();
+
+            const expMap = {};
+            transactions.filter(t => t.type === 'expense').forEach(t => expMap[t.category] = (expMap[t.category] || 0) + t.amount);
+            pieChart.data.labels = Object.keys(expMap);
+            pieChart.data.datasets[0].data = Object.values(expMap);
+            pieChart.update();
+        }
+
+        function openModal() { document.getElementById('modalOverlay').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        
+        function saveEntry() {
+            const cat = document.getElementById('fCat').value, amt = parseFloat(document.getElementById('fAmt').value), type = document.getElementById('fType').value;
+            if(!cat || !amt) return alert("Please enter valid details");
+            transactions.push({ id: Date.now(), date: new Date().toISOString().split('T')[0], category: cat, type: type, amount: amt });
+            closeModal(); updateDashboard();
+        }
+
+        function deleteEntry(id) {
+            if(confirm("Delete this record?")) { transactions = transactions.filter(t => t.id !== id); updateDashboard(); }
+        }
+    </script>
+</body>
+</html>
